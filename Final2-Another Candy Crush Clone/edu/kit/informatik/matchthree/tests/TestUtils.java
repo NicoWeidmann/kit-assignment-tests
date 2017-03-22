@@ -8,7 +8,7 @@ import edu.kit.informatik.matchthree.framework.Position;
 import edu.kit.informatik.matchthree.framework.Token;
 import edu.kit.informatik.matchthree.framework.interfaces.Board;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 /**
  * TestUtils as an extension to junit's Assert lib
@@ -19,7 +19,7 @@ import static org.junit.Assert.assertEquals;
 public final class TestUtils {
 
     public static <T> void assertSetEquals(Set<T> expected, Set<T> actual) {
-        assert TestUtils.setEquals(expected, actual);
+        assertTrue(TestUtils.setEquals(expected, actual));
     }
 
     public static <T> void assertSetOfSetsEquals(Set<Set<T>> expectedSets, Set<Set<T>> actualSets) {
@@ -31,12 +31,12 @@ public final class TestUtils {
             System.out.println("ACTUAL: " + actualSets.stream().map(set -> set.stream().map(Object::toString)
                     .collect(Collectors.joining(", "))).collect(Collectors.joining("; ")));
 
-            assert false;
+            fail();
         }
 
         for (Set<T> expected : expectedSets) {
             if (actualSets.stream().noneMatch(actual -> TestUtils.setEquals(expected, actual))) {
-                assert false;
+                fail();
             }
         }
     }
@@ -86,5 +86,62 @@ public final class TestUtils {
         }
         
         return true;
+    }
+    
+    /**
+     * Returns a pretty "unicode-image" of the given board using box-drawing characters,
+     *   e.g. the board 'ABC;DEF;GHI' will print:
+     *   
+     *   ┌───┬───┬───┐
+     *   │ A │ B │ C │
+     *   ├───┼───┼───┤
+     *   │ D │ E │ F │
+     *   ├───┼───┼───┤
+     *   │ G │ H │ I │
+     *   └───┴───┴───┘
+     * 
+     * Save this file with UTF8 encoding, else you'll probably see random characters!
+     * @see https://github.com/luk3b/prog-assignment-tests#pretty-print-for-board
+     *   
+     * @param board Well, the board to print obviously
+     * @return A pretty board :)
+     */
+    public static String prettyPrint(Board board) {
+        final String TL   = "\u250c";             // top left corner
+        final String TR   = "\u2510";             // top right corner
+        final String BR   = "\u2518";             // bottom right corner
+        final String BL   = "\u2514";             // bottom left corner
+        final String T0   = "\u252c";             // "T" character
+        final String T90  = "\u2524";             // 90° flipped "T"
+        final String T180 = "\u2534";             // 180° flipped "T"
+        final String T270 = "\u251c";             // 270° flipped "T"
+        final String VERT = "\u2500\u2500\u2500"; // vertical bar
+        final String HORI = "\u2502";             // horizontal bar
+        final String CROS = "\u253c";             // cross
+
+        int width  = board.getColumnCount();
+        int height = board.getRowCount();
+        StringBuilder b = new StringBuilder();
+
+        b.append(TL + VERT); for (int i = 1; i < width; i++) b.append(T0 + VERT); b.append(TR + "\n");
+
+        for (int y = 0; y < height; y++) {
+            b.append(HORI);
+            for (int x = 0; x < width; x++) {
+                Token t = board.getTokenAt(Position.at(x, y));
+                b.append(" " + (t != null ? t : " ") + " ");
+
+                if (x < width - 1)
+                    b.append(HORI);
+            }
+            b.append(HORI + "\n");
+
+            if (y < height - 1) {
+                b.append(T270 + VERT); for (int h = 1; h < width; h++) b.append(CROS + VERT); b.append(T90 + "\n");
+            }
+        }
+
+        b.append(BL + VERT); for (int i = 1; i < width; i++) b.append(T180 + VERT); b.append(BR);
+        return b.toString();
     }
 }
